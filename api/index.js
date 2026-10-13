@@ -2,8 +2,8 @@ const express = require('express');
 const app = express();
 
 // Payload limit badha di hai taaki bada menu data error na de
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
+app.use(express.json({ limit: '100mb', type: ['application/json', 'text/plain'] }));
+app.use(express.urlencoded({ limit: '100mb', extended: true }));
 
 // 1. Menu Push Endpoint
 app.post('/api/petpooja/menu-push', (req, res) => {
