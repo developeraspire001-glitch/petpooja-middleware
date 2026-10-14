@@ -31,10 +31,36 @@ app.post('/api/petpooja/item-on', (req, res) => {
     res.status(200).json({ status: "success", message: "Item turned on" });
 });
 
-// 6. Shopify Order Webhook Endpoint
+// 6. Shopify Order Webhook Endpoint & Petpooja Mapping
 app.post('/shopify-order-webhook', (req, res) => {
-    console.log("Shopify Order Received:", req.body);
-    res.status(200).send("Order Received");
+    try {
+        const shopifyOrder = req.body;
+        console.log("Shopify Order Received ID:", shopifyOrder.id);
+
+        // Petpooja restaurant ID aur format ke mutabiq order data map karna
+        const petpoojaPayload = {
+            restaurant_id: "3w51vcd6et",
+            order_id: shopifyOrder.name,
+            total_amount: shopifyOrder.total_price,
+            customer_details: {
+                name: shopifyOrder.customer ? `${shopifyOrder.customer.first_name || ''} ${shopifyOrder.customer.last_name || ''}`.trim() : "Guest",
+                phone: shopifyOrder.phone || shopifyOrder.customer?.phone || ""
+            },
+            items: shopifyOrder.line_items.map(item => ({
+                item_code: item.sku || "",
+                item_name: item.name,
+                quantity: item.quantity,
+                price: item.price
+            }))
+        };
+
+        console.log("Mapped Petpooja Payload:", JSON.stringify(petpoojaPayload));
+
+        res.status(200).send("Order Received & Mapped Successfully");
+    } catch (error) {
+        console.error("Error processing order webhook:", error);
+        res.status(500).send("Error processing webhook");
+    }
 });
 
 module.exports = app;
