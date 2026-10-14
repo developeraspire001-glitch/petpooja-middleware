@@ -29,7 +29,7 @@ app.post('/api/petpooja/item-on', (req, res) => {
     res.status(200).json({ status: "success", message: "Item turned on" });
 });
 
-// 6. Shopify Webhook Endpoint -> Petpooja Save Order API V2.1
+// 6. Shopify Webhook Endpoint -> Petpooja Correct Staging Save Order API
 app.post('/shopify-order-webhook', async (req, res) => {
     try {
         const shopifyOrder = req.body;
@@ -40,13 +40,12 @@ app.post('/shopify-order-webhook', async (req, res) => {
         const currentTime = now.toTimeString().split(' ')[0];
 
         const customerName = shopifyOrder.customer 
-            ? `${shopifyOrder.customer.first_name || ''} ${shopifyOrder.customer.last_name || ''}`.trim() 
+            ? `${shopifyOrder.customer.first_name \vert{}\vert{} ''}${shopifyOrder.customer.last_name || ''}`.trim() 
             : "Guest Customer";
 
         const rawPhone = shopifyOrder.phone || shopifyOrder.customer?.phone || shopifyOrder.shipping_address?.phone || "9999999999";
         const cleanPhone = rawPhone.replace(/\D/g, '').slice(-10) || "9999999999";
 
-        // Petpooja Save Order API exact schema format
         const petpoojaPayload = {
             app_key: "rps3igv8ucfhydx0lao6k9obnz75tqw4",
             app_secret: "71b70724b84d8d8ca06fe9cc0da105b07c412228",
@@ -99,7 +98,7 @@ app.post('/shopify-order-webhook', async (req, res) => {
                             discount_type: "F",
                             total: String(shopifyOrder.total_price || "0"),
                             description: shopifyOrder.note || "",
-                            created_on: `${currentDate} ${currentTime}`,
+                            created_on: `${currentDate} `${currentTime}`,
                             enable_delivery: 1,
                             min_prep_time: 20,
                             callback_url: "",
@@ -138,9 +137,10 @@ app.post('/shopify-order-webhook', async (req, res) => {
             }
         };
 
-        console.log("Sending Payload to Petpooja:", JSON.stringify(petpoojaPayload));
+        console.log("Sending Payload to Correct Petpooja URL:", JSON.stringify(petpoojaPayload));
 
-        const petpoojaResponse = await fetch("https://47pfzh5sf2.execute-api.ap-southeast-1.amazonaws.com/V1/save_order", {
+        // Exact Staging Endpoint URL from screenshot
+        const petpoojaResponse = await fetch("https://qle1yy2ydc.execute-api.ap-southeast-1.amazonaws.com/V1/save_order", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
