@@ -31,15 +31,18 @@ app.post('/api/petpooja/item-on', (req, res) => {
     res.status(200).json({ status: "success", message: "Item turned on" });
 });
 
-// 6. Shopify Order Webhook Endpoint & Petpooja Mapping
-app.post('/shopify-order-webhook', (req, res) => {
+// 6. Shopify Order Webhook Endpoint & Petpooja Save Order API Integration
+app.post('/shopify-order-webhook', async (req, res) => {
     try {
         const shopifyOrder = req.body;
         console.log("Shopify Order Received ID:", shopifyOrder.id);
 
-        // Petpooja restaurant ID aur format ke mutabiq order data map karna
+        // Petpooja Save Order API ke format ke mutabiq payload aur aapki real keys
         const petpoojaPayload = {
-            restaurant_id: "3w51vcd6et",
+            app_key: "rps3igv8ucfhydx0lao6k9obnz75tqw4",
+            app_secret: "71b70724b84d8d8ca06fe9cc0da105b07c412228",
+            access_token: "7337c1365cf2o6e1fe5f2b9f8d445db00dc6c39a1",
+            restID: "3w51vcd6et",
             order_id: shopifyOrder.name,
             total_amount: shopifyOrder.total_price,
             customer_details: {
@@ -54,11 +57,23 @@ app.post('/shopify-order-webhook', (req, res) => {
             }))
         };
 
-        console.log("Mapped Petpooja Payload:", JSON.stringify(petpoojaPayload));
+        console.log("Sending Payload to Petpooja:", JSON.stringify(petpoojaPayload));
 
-        res.status(200).send("Order Received & Mapped Successfully");
+        // Petpooja Save Order API par POST request bhejna
+        const petpoojaResponse = await fetch("https://47pfzh5sf2.execute-api.ap-southeast-1.amazonaws.com/V1/save_order", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(petpoojaPayload)
+        });
+
+        const result = await petpoojaResponse.json();
+        console.log("Petpooja API Response:", result);
+
+        res.status(200).send("Order Successfully Forwarded to Petpooja");
     } catch (error) {
-        console.error("Error processing order webhook:", error);
+        console.error("Error pushing order to Petpooja:", error);
         res.status(500).send("Error processing webhook");
     }
 });
